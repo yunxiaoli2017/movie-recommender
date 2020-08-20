@@ -20,6 +20,7 @@ public class MovieDataAccessService implements MovieDao {
     this.jdbcTemplate = jdbcTemplate;
     final String sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='movies';";
     this.setSize(this.jdbcTemplate.queryForObject(sql, Integer.class));
+    System.out.print(getSize());
   }
   
   @Override
@@ -47,7 +48,8 @@ public class MovieDataAccessService implements MovieDao {
   public List<Movie> getRandomMovies(int num) {
     
     // getSize() returns estimated size to avoid slow counting; /2 for safety
-    int[] randomRows = new Random().ints(2 * num, 0, getSize() / 2)
+    int bound = Integer.max(30, getSize() / 2);
+    int[] randomRows = new Random().ints(2 * num, 0, bound)
                                        .distinct()
                                        .limit(num)
                                        .toArray();
