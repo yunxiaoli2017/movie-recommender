@@ -1,0 +1,87 @@
+body {
+  background-color: #000;
+}
+
+#landing-header {
+  z-index: 1;
+  position: relative;
+  text-align: center;
+  padding-top: 40vh;
+}
+
+#landing-header h1 {
+  font-size: 3em;
+  color: #fff;
+}
+
+#landing-header p {
+  color: #d9d8ca;
+}
+
+#landing-header span {
+  font-size: 1.3em;
+  color: #fff;
+  padding-right: 20px;
+}
+
+
+.slideshow { 
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.slideshow li { 
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* background-size: cover; */
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  z-index: 0;
+  animation: imageAnimation 30s linear infinite; 
+}
+
+.slideshow li:nth-child(1) { 
+  background-image: url(https://g.foolcdn.com/image/?url=https%3A//g.foolcdn.com/editorial/images/584558/dark-empty-movie-theater.jpg&w=2000&op=resize); 
+  /* background-image: url(https://s0.2mdn.net/4331293/02252020-011650823-DDB_YRYS_NA_NA_LikeAGoodNeighborStaticBackUp_Auto_Banner_GAQ_728x90_NA_jpg.jpg); */
+}
+.slideshow li:nth-child(2) { 
+  background-image: url(https://www.remaudiology.com/wp-content/uploads/2018/05/Fotolia_165796723_Subscription_Monthly_M.jpg);
+  animation-delay: 10s; 
+}
+.slideshow li:nth-child(3) {
+  background-image: url(https://dkr0pu7ej5xex.cloudfront.net/wp-content/uploads/2017/04/24135159/Netflix-Background.jpg);
+  animation-delay: 20s; 
+}
+
+@keyframes imageAnimation { 
+  0% { 
+    opacity: 0; 
+    animation-timing-function: ease-in;
+  }
+  10% {
+    opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  20% {
+    opacity: 1
+  }
+  30% {
+    opacity: 0
+  }
+}
+
+/* Older browser support - .no-cssanimations class added by modernizr */
+.no-cssanimations .slideshow li {
+	opacity: 1;
+}
