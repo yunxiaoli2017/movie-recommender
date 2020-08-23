@@ -19,6 +19,11 @@ body {
 	font-weight: 400;
 }
 
+.jumbotron h1 span {
+	font-family: 'PT Sans Narrow', sans-serif;
+	font-weight: 700;
+}
+
 
 .card {
 	background-color: #000;
@@ -31,6 +36,11 @@ img.poster {
 
 div.genres {
 	color: #d9d8ca;
+}
+
+.regenerate {
+	font-size: 0.7em;
+	display: block;
 }
 
 /* div.rating {

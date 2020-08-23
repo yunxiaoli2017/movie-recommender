@@ -27,15 +27,31 @@
 		</svg>
 		<div class="container">
 		
-	    	<header class="jumbotron">
+	    	<header class="jumbotron pb-3">
 			    <div class="container">
-			      <h1>Welcome to Movie Recommender!</h1>
+			      <h1>Welcome to <span>Movie Recommender!</span></h1>
 			      <p>Movies picked for you are just a few clicks away!</p>
 			      <p>Rate as many as you'd like, and submit to get recommendations.</p>
 			      <hr>
-			      <p>
-			        <a class="btn btn-primary btn-md" href="/rate">Unfamiliar? Re-generate some</a>
-			      </p>
+			      <!-- <form action="/rate" method="GET">
+			      	<input class="form-control" id="numMovies" type="number" name="numMovies" value="30" min="1" step="1" max="100">
+			      	<label for="numMovies">Number of movies to show</label>
+			      	<input type="submit" value="Unfamiliar? Re-generate" class="btn btn-md btn-success">
+			      </form> -->
+			      <form action="/rate" method="GET">
+				      <div class="input-group mb-3">
+				      	<div class="container px-0 w-100">
+				      	  <p class="w-75">Unfamiliar? Choose how many movies to re-generate</p>
+				      	</div>
+			      	  	<input class="form-control col-3 col-lg-1" id="numMovies" type="number" name="numMovies" th:value="${numMovies} ?: 32" min="1" step="1" max="100">
+						<div class="input-group-append">
+						  <button class="btn btn-md btn-primary" type="submit">Show repicked results</button>
+						</div>			
+					  </div>
+				  </form>
+			      <!-- <p>
+			        <a class="btn btn-primary btn-md" href="/rate">Unfamiliar? Re-generate</a>
+			      </p> -->
 			      <p>
 			        <a href="/" class="btn btn-md btn-secondary go-back">Back to landing page</a>
 			      </p>
@@ -125,8 +141,8 @@
 		       				</div>
 		       			</div>
 	       			</div>
-		       		<div align="right">
-	        			<input type="submit" value="Submit Ratings" th:class="${error} ? 'd-none' : 'btn btn-success btn-md'" class="btn btn-md btn-success submit">
+		       		<div class="container">
+	        			<input type="submit" value="Submit Ratings" th:class="${error} ? 'd-none' : 'btn btn-success btn-md d-block'" class="btn btn-md btn-success submit d-block">
 	        		</div>
 		       </div>
 	       </form>

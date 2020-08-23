@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import yunxiao.movierecommender.dto.RatingCreationDto;
 import yunxiao.movierecommender.model.Movie;
@@ -33,15 +34,16 @@ public class MovieController {
   }
   
   @GetMapping("/rate")
-  public String rateRandomMovies(Model model) {
+  public String rateRandomMovies(@RequestParam(defaultValue = "32") int numMovies, Model model) {
     boolean myBooleanVariable = true;
-    List<Movie> randomMovies = movieService.getRandomPopularMovies(20);
+    List<Movie> randomMovies = movieService.getRandomPopularMovies(numMovies);
     RatingCreationDto ratingCreationDto = new RatingCreationDto();
     ratingCreationDto.addEmptyRatings(randomMovies.size());
     List<Rating> ratings = ratingCreationDto.getRatings();
     for (int i = 0; i < randomMovies.size(); i++) {
       ratings.get(i).setMovieId(randomMovies.get(i).getId());
     }
+    model.addAttribute("numMovies", numMovies);
     model.addAttribute("form", ratingCreationDto);
     model.addAttribute("movies", randomMovies);
     model.addAttribute("myBooleanVariable", myBooleanVariable);
