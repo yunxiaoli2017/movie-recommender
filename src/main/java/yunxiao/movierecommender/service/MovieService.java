@@ -29,8 +29,8 @@ public class MovieService {
     return movieDao.getRandomMovies(num);
   }
   
-  public List<Movie> getRandomMovies(int num, double percentage) {
-    return movieDao.getRandomMovies(num, percentage);
+  public List<Movie> getRandomPopularMovies(int num) {
+    return movieDao.getRandomPopularMovies(num);
   }
   
   public List<Movie> getRecommendedMovies(List<Integer> movieIds) {

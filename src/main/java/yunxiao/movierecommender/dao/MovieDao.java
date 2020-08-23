@@ -10,6 +10,6 @@ public interface MovieDao {
   Optional<Movie> getMovieById(int id);
   
   List<Movie> getRandomMovies(int num);
-  
-  List<Movie> getRandomMovies(int num, double percentage);
+
+  List<Movie> getRandomPopularMovies(int num);
 }

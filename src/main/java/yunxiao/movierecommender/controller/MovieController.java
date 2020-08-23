@@ -35,7 +35,7 @@ public class MovieController {
   @GetMapping("/rate")
   public String rateRandomMovies(Model model) {
     boolean myBooleanVariable = true;
-    List<Movie> randomMovies = movieService.getRandomMovies(20);
+    List<Movie> randomMovies = movieService.getRandomPopularMovies(20);
     RatingCreationDto ratingCreationDto = new RatingCreationDto();
     ratingCreationDto.addEmptyRatings(randomMovies.size());
     List<Rating> ratings = ratingCreationDto.getRatings();
@@ -52,6 +52,7 @@ public class MovieController {
   public String getSubmittedRatings(@ModelAttribute RatingCreationDto form, Model model) {
     List<Rating> ratings = form.getRatings();
     ratings = ratingService.filterZeroRating(ratings);
+    ratingService.decouplingNormalization(ratings);
     if (ratings.size() < 1) {
       model.addAttribute("error", "At least one rating has to be submitted.");
       return "rate";

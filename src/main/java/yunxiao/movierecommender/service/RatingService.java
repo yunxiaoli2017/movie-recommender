@@ -1,6 +1,8 @@
 package yunxiao.movierecommender.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import yunxiao.movierecommender.dao.MovieDataAccessService;
 import yunxiao.movierecommender.dao.RatingDao;
 import yunxiao.movierecommender.model.Rater;
 import yunxiao.movierecommender.model.Rating;
@@ -22,8 +25,9 @@ import yunxiao.movierecommender.model.Rating;
 public class RatingService {
   
   private final RatingDao ratingDao;
-  static public int MAX_RECOMMENDATIONS = 20;
+  static public int MAX_RECOMMENDATIONS = 10;
   static public int MAX_RECOMMENDING_RATERS = 100;
+  static public final List<Double> POSSIBLE_RATINGS = Collections.unmodifiableList(Arrays.asList((double) 1, (double) 2, (double) 3, (double) 4, (double) 5));
   
   @Autowired
   public RatingService(@Qualifier("postgres-rating") RatingDao ratingDao) {
@@ -43,10 +47,47 @@ public class RatingService {
     Map<Integer, Double> similarities = ratingDao.getSimilarityMap(ratings);
     List<Rater> raters = getTopRaters(similarities);
     Map<Integer, Double> movieScores = getMovieScores(raters, ratedMovieIds);
-    List<Integer> topMovies = getTopMovieIds(movieScores);
+    List<Map<Integer, Double>> dividedMovieScores = divideByPopularity(movieScores);
+    Map<Integer, Double> popularMovieScores = dividedMovieScores.get(0);
+    Map<Integer, Double> unpopularMovieScores = dividedMovieScores.get(1);
+    int numMovie = Integer.min(MAX_RECOMMENDATIONS, unpopularMovieScores.size());
+    List<Integer> topUnpopularMovies = getTopMovieIds(unpopularMovieScores, numMovie);
+    numMovie = Integer.min(2 * MAX_RECOMMENDATIONS - topUnpopularMovies.size(), popularMovieScores.size());
+    List<Integer> topPopularMovies = getTopMovieIds(popularMovieScores, numMovie);
+    List<Integer> topMovies = weaveTwoLists(topPopularMovies, topUnpopularMovies);
     return topMovies;
   }
   
+  private List<Integer> weaveTwoLists(List<Integer> topPopularMovies, List<Integer> topUnpopularMovies) {
+    List<Integer> topMovies = new ArrayList<>();
+    for (int i = 0; i < Integer.max(topUnpopularMovies.size(), topPopularMovies.size()); i++) {
+      if (i < topPopularMovies.size()) {
+        topMovies.add(topPopularMovies.get(i));
+      }
+      if (i < topUnpopularMovies.size()) {
+        topMovies.add(topUnpopularMovies.get(i));
+      }
+    }
+    return topMovies;
+  }
+
+  private List<Map<Integer, Double>> divideByPopularity(Map<Integer, Double> movieScores) {
+    List<Map<Integer, Double>> dividedMovieScores = new ArrayList<>();
+    Map<Integer, Double> popularMovieScores = new HashMap<>();
+    Map<Integer, Double> unpopularMovieScores = new HashMap<>();
+    for (Map.Entry<Integer, Double> entry : movieScores.entrySet()) {
+      if (MovieDataAccessService.popularMovieIds.contains(entry.getKey())) {
+        popularMovieScores.put(entry.getKey(), entry.getValue());
+      } else {
+        unpopularMovieScores.put(entry.getKey(), entry.getValue());
+      }
+    }
+    dividedMovieScores.add(popularMovieScores);
+    dividedMovieScores.add(unpopularMovieScores);
+    return dividedMovieScores;
+  }
+
+
   private List<Rater> getTopRaters(Map<Integer, Double> similarities) {
     int numRater = Integer.min(MAX_RECOMMENDING_RATERS, similarities.size());
     Comparator<Entry<Integer, Double>> similarityComparator = new Comparator<Entry<Integer, Double>>() {
@@ -81,8 +122,11 @@ public class RatingService {
     return ids;
   }
 
-  private List<Integer> getTopMovieIds(Map<Integer, Double> scores) {
-    int numMovie = Integer.min(MAX_RECOMMENDATIONS, scores.size());
+  private List<Integer> getTopMovieIds(Map<Integer, Double> scores, int numMovie) {
+    numMovie = Integer.min(numMovie, scores.size());
+    if (numMovie < 1) {
+      return new ArrayList<Integer>();
+    }
     Comparator<Entry<Integer, Double>> scoreComparator = new Comparator<Entry<Integer, Double>>() {
         @Override
         public int compare(Entry<Integer, Double> e0, Entry<Integer, Double> e1)
@@ -196,13 +240,31 @@ public class RatingService {
     return nonZeroRatings;
   }
   
-  public List<Rating> filterZeroAndThreeRating(List<Rating> ratings) {
-    List<Rating> filteredRatings = new ArrayList<>();
+//  public List<Rating> filterZeroAndThreeRating(List<Rating> ratings) {
+//    List<Rating> filteredRatings = new ArrayList<>();
+//    for (Rating r : ratings) {
+//      if (r.getRating() > 0.1 && (r.getRating() < 2.9 || r.getRating() > 3.1)) {
+//        filteredRatings.add(r);
+//      }
+//    }
+//    return filteredRatings;
+//  }
+
+  public void decouplingNormalization(List<Rating> ratings) {
+    Map<Double, Double> percentageOfRatingLowerThan = new HashMap<>();
+    Map<Double, Double> percentageOfRatingEqualTo = new HashMap<>();
+    int numRatings = ratings.size();
     for (Rating r : ratings) {
-      if (r.getRating() > 0.1 && (r.getRating() < 2.9 || r.getRating() > 3.1)) {
-        filteredRatings.add(r);
-      }
+      percentageOfRatingEqualTo.put(r.getRating(), percentageOfRatingEqualTo.getOrDefault(r.getRating(), (double) 0) + (double) 1 / numRatings);
     }
-    return filteredRatings;
+    for (int i = 1; i < POSSIBLE_RATINGS.size(); i++) {
+      Double currentR = POSSIBLE_RATINGS.get(i);
+      Double prevR = POSSIBLE_RATINGS.get(i - 1);
+      percentageOfRatingLowerThan.put(currentR, percentageOfRatingLowerThan.getOrDefault(prevR, (double) 0) + percentageOfRatingEqualTo.getOrDefault(prevR, (double) 0));
+    }
+    for (Rating r : ratings) {
+      double unnormalized = r.getRating();
+      r.setRating(percentageOfRatingLowerThan.getOrDefault(unnormalized, (double) 0) + percentageOfRatingEqualTo.getOrDefault(unnormalized, (double) 0) / 2 - 0.5);
+    }
   }
 }

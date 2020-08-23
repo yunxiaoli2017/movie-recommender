@@ -1,9 +1,12 @@
 package yunxiao.movierecommender.dao;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
+
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -14,13 +17,29 @@ import yunxiao.movierecommender.model.Movie;
 public class MovieDataAccessService implements MovieDao {
   
   private final JdbcTemplate jdbcTemplate;
-  private int size;
+  public static int size;
+  public static int popularSize;
+  public static Set<Integer> popularMovieIds;
   
   public MovieDataAccessService(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
-    final String sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='movies';";
+    String sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='movies';";
     this.setSize(this.jdbcTemplate.queryForObject(sql, Integer.class));
-    System.out.print(getSize());
+    sql = "SELECT movie_id FROM popular_movies;";
+    List<Integer> popularIds = new ArrayList<>();
+    try {
+      popularIds = jdbcTemplate.query(sql, (resultSet, i) -> {
+        int movieId = resultSet.getInt("movie_id");
+        return movieId;
+      });
+    } catch (EmptyResultDataAccessException e) {
+      popularIds = null;
+    }
+    this.setPopularSize(popularIds.size());
+    popularMovieIds = new HashSet<>();
+    for (Integer id : popularIds) {
+      popularMovieIds.add(id);
+    }
   }
   
   @Override
@@ -78,16 +97,21 @@ public class MovieDataAccessService implements MovieDao {
     return randomMovies;
   }
   
-  @Override
-  public List<Movie> getRandomMovies(int num, double percentage) {
-    final String sql = String.format("SELECT * FROM movies TABLESAMPLE SYSTEM(%f) LIMIT 1", percentage);
-    int currentAttempts = 0;
-    int maxAttempts = 100 * num;
-    List<Movie> randomMovies = new ArrayList<Movie>();
+public List<Movie> getRandomPopularMovies(int num) {
     
-    while (randomMovies.size() < num && currentAttempts < maxAttempts) {
+    // getSize() returns estimated size to avoid slow counting; /2 for safety
+    int bound = Integer.max(30, getPopularSize());
+    int[] randomRows = new Random().ints(2 * num, 0, bound)
+                                       .distinct()
+                                       .limit(num)
+                                       .toArray();
+    
+    final String sql = "SELECT * FROM popular_movies LIMIT 1 OFFSET ?";
+    List<Movie> randomMovies = new ArrayList<>();
+    for (int row : randomRows) {
+      Movie movie = new Movie();
       try {
-        Movie movie = jdbcTemplate.queryForObject(sql, (resultSet, i) -> {
+        movie = jdbcTemplate.queryForObject(sql, new Object[] {row}, (resultSet, i) -> {
           int movieId = resultSet.getInt("movie_id");
           int imdbId = resultSet.getInt("imdb_id");
           String title = resultSet.getString("title");
@@ -96,20 +120,30 @@ public class MovieDataAccessService implements MovieDao {
           String posterUrl = resultSet.getString("poster_url");
           return new Movie(movieId, imdbId, title, genres, imdbUrl, posterUrl);
         });
-        randomMovies.add(movie);
       } catch (EmptyResultDataAccessException e) {
-        
+        movie = new Movie();
       }
-      currentAttempts++;
+      if (!movie.isBlank()) {
+        randomMovies.add(movie);
+      }
     }
     return randomMovies;
   }
-
+  
+ 
   public int getSize() {
     return size;
   }
 
-  public void setSize(int size) {
-    this.size = size;
+  private void setSize(int size) {
+    MovieDataAccessService.size = size;
+  }
+
+  public int getPopularSize() {
+    return popularSize;
+  }
+
+  private void setPopularSize(int popularSize) {
+    MovieDataAccessService.popularSize = popularSize;
   }
 }
