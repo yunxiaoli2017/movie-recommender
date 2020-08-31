@@ -3,6 +3,7 @@ package yunxiao.movierecommender.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,8 @@ public class MovieController {
   
   private final MovieService movieService;
   private final RatingService ratingService;
+  @Value("${use-angular-frontend}")
+  private boolean useAngularFrontend;
   
   @Autowired
   public MovieController(MovieService movieService, RatingService ratingService) {
@@ -35,7 +38,6 @@ public class MovieController {
   
   @GetMapping("/rate")
   public String rateRandomMovies(@RequestParam(defaultValue = "32") int numMovies, Model model) {
-    boolean myBooleanVariable = true;
     List<Movie> randomMovies = movieService.getRandomPopularMovies(numMovies);
     RatingCreationDto ratingCreationDto = new RatingCreationDto();
     ratingCreationDto.addEmptyRatings(randomMovies.size());
@@ -43,10 +45,8 @@ public class MovieController {
     for (int i = 0; i < randomMovies.size(); i++) {
       ratings.get(i).setMovieId(randomMovies.get(i).getId());
     }
-    model.addAttribute("numMovies", numMovies);
     model.addAttribute("form", ratingCreationDto);
     model.addAttribute("movies", randomMovies);
-    model.addAttribute("myBooleanVariable", myBooleanVariable);
     return "rate";
   }
   
