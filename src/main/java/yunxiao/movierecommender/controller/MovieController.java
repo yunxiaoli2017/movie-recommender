@@ -38,7 +38,7 @@ public class MovieController {
   }
   
   @GetMapping("/rate")
-  public List<Movie> rateRandomMovies(@RequestParam(defaultValue = "32") int numMovies) {
+  public List<Movie> getRandomMovies(@RequestParam(defaultValue = "32") int numMovies) {
     List<Movie> randomMovies = movieService.getRandomPopularMovies(numMovies);
     return randomMovies;
   }
