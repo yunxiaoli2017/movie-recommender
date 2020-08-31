@@ -13,6 +13,7 @@ Original and processed movieLens dataset, as well as processing steps can be fou
 
 ### Framework & Database
 
+* [Angular](https://angular.io/) (In brach angular)
 * [Spring Boot](https://spring.io/)
 * [PostgresQL](https://www.postgresql.org/) (served on [AWS](https://aws.amazon.com/rds/))
 * [Flyway](https://flywaydb.org/)
