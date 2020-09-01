@@ -17,7 +17,7 @@ import yunxiao.movierecommender.model.Rating;
 import yunxiao.movierecommender.service.MovieService;
 import yunxiao.movierecommender.service.RatingService;
 
-@CrossOrigin(maxAge = 3600)
+@CrossOrigin(origins = {"http://localhost:4200", "http://movie-recommender-demo.herokuapp.com"}, maxAge = 3600)
 @Controller
 public class MovieController {
   
